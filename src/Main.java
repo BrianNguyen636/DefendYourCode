@@ -1,3 +1,10 @@
+/*
+Team18
+Andrew Nguyen
+Anthony Nguyen
+Brian Nguyen
+ */
+
 import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
