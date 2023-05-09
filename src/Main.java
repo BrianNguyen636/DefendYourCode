@@ -1,4 +1,10 @@
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -7,61 +13,119 @@ public class Main {
 
     private static final Scanner IN = new Scanner(System.in);
 
-    public static void main(String[] args) {
-        //Get Names
-        String[] name = getName();
-        String firstName = name[0];
-        String lastName = name[1];
-        System.out.println(firstName + " " + lastName);
-        //Get Ints
-//        int[] ints = getInts();
-//        int firstInt = ints[0];
-//        int secondInt = ints[1];
-//        System.out.println(firstInt);
-//        System.out.println(secondInt);
-        //Get input file
-//        File[] files = getFiles();
-//        File inputFile = files[0];
-//        File outputFile = files[1];
-//        getPassword();
+    public static void main(final String[] args) {
+        final String[] names = getName();
+        final int[] ints = getInts();
+        final File[] files = getFiles();
+        getPassword();
+        saveInfo(names, ints, files);
+        IN.close();
+    }
+
+    private static void saveInfo(final String[] names, final int[] ints,
+                                 final File[] files) {
+
     }
 
     private enum TEST {name, integer, file, password}
 
-    public static String loopingPrompt(String displayText, TEST type) {
+    private static String loopingPrompt(final String displayText,
+                                        final TEST type) {
         String input = null;
         boolean valid = false;
         while (!valid) {
-            System.out.println();
-            System.out.print(displayText + ": ");
+            System.out.printf("\n%s: ", displayText);
             input = IN.nextLine();
             switch (type) {
                 case name -> valid = parseName(input);
                 case integer -> valid = parseInts(input);
                 case file -> valid = parseFile(input);
                 case password -> valid = parsePassword(input);
+                default ->
+                        System.out.println("Shouldn't be able to reach this!");
             }
         }
         return input;
     }
 
     /**
-     * Prompts for a password, then applies the proper salting and hashing
-     * and writes it to an output file.
+     * Regex matcher helper function
+     *
+     * @param theRegex The pattern string
+     * @param theInput The string to be pattern matched
+     * @return Boolean if the input string matches the pattern
+     */
+    private static boolean regex(final String theRegex, final String theInput) {
+        final Pattern p = Pattern.compile(theRegex);
+        final Matcher m = p.matcher(theInput);
+        return m.matches();
+    }
+
+    /**
+     * Prompts for a password, applies the proper salting and hashing via
+     * SecureRandom and SHA-512 respectively, and then writes it to an output
+     * file.
      */
     public static void getPassword() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Please enter a new password.");
-        String pass;
+        final String criteria = """
+                Your password must meet the following criteria:
+                \t- At least ten characters long
+                \t- At least one uppercase letter
+                \t- At least one digit
+                \t- At least one lowercase letter
+                \t- At least one special character (?!,:;',._)
+                \t- No more than 3 consecutive lowercase characters
+                Your password""";
+        final String pw = loopingPrompt(criteria, TEST.password).trim();
+        final byte[] salt = genSalt();
+        final String path = Paths.get("").toAbsolutePath() + "Password.txt";
+        try {
+            Files.write(Paths.get(path), genHash(salt, pw));
+        } catch (Exception e) {
+            // TODO log e
+        }
+        final String verify = "Re-enter your password";
         boolean valid = false;
         while (!valid) {
-            System.out.println();
-            System.out.println("Must be at least 8 characters, and at least " + "one uppercase and lowercase,");
-            System.out.println("at least one special character and at least " + "one digit.");
-            System.out.print("Password: ");
-            pass = scanner.nextLine();
-            valid = parsePassword(pass);
+            final String pw2 = loopingPrompt(verify, TEST.password).trim();
+            valid = validatePassword(pw2, salt, path);
         }
+        new File(path).deleteOnExit();
+    }
+
+    private static byte[] genSalt() {
+        final byte[] salt = new byte[16];
+        new SecureRandom().nextBytes(salt);
+        return salt;
+    }
+
+    private static byte[] genHash(final byte[] salt, final String password) {
+        byte[] hashed = null;
+        try {
+            final MessageDigest md = MessageDigest.getInstance("SHA-512");
+            md.update(salt);
+            hashed = md.digest(password.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            // TODO log e
+        }
+        return hashed;
+    }
+
+    private static boolean validatePassword(final String password2,
+                                            final byte[] salt,
+                                            final String path) {
+        final String admonition = "File issue occurred.";
+        boolean valid = false;
+        if (new File(path).exists()) {
+            try {
+                final byte[] hash = Files.readAllBytes(Paths.get(path));
+                valid = Arrays.equals(genHash(salt, password2), hash);
+            } catch (Exception e) {
+                System.out.println(admonition);
+                // TODO log e
+            }
+        } else System.out.println(admonition);
+        return valid;
     }
 
     /**
@@ -71,7 +135,7 @@ public class Main {
      * @return true/false if pattern matches
      */
     public static boolean parsePassword(final String theInput) {
-        return regex(".*[A-Z].*", theInput) && regex(".*[a-z].*", theInput) && regex(".*[^\\w\\d].*", theInput) && regex(".*\\d.*", theInput) && !regex(".{0,7}", theInput);
+        return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" + ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
     }
 
     /**
@@ -79,41 +143,19 @@ public class Main {
      *
      * @return Array of 2 strings containing the filenames.
      */
-    public static File[] getFiles() {
-        Scanner scanner = new Scanner(System.in);
-        File outputFile = null;
-        File inputFile = null;
-        boolean valid = false;
-        while (!valid) {
-            System.out.println();
-            System.out.println("Please enter the name of your input file " +
-                    "including the extension (.txt only)");
-            System.out.print("Filename: ");
-            String input = scanner.nextLine();
-            valid = parseFile(input);
-            if (!valid) {
-                System.out.println("Improper file name.");
-            } else {
-                inputFile = new File(input);
-                valid = inputFile.exists();
-                if (!valid)
-                    System.out.println("File does not exist in directory.");
-            }
-        }
-        valid = false;
-        while (!valid) {
-            System.out.println();
-            System.out.println("Please enter the name of your output file " + "including the extension (.txt only)");
-            System.out.print("Filename: ");
-            String output = scanner.nextLine();
-            valid = parseFile(output);
-            if (!valid) {
-                System.out.println("Improper file name.");
-            } else {
-                outputFile = new File(output);
-            }
-        }
-        return new File[]{inputFile, outputFile};
+    private static File[] getFiles() {
+        final String criteria = """
+                %s file name must meet the following criteria:
+                \t- Full path must be included
+                \t- Extension must be included
+                \t- Extension can only be .txt
+                %s file name""";
+        final String[] prompt = new String[]{"Your input", "Your output"};
+        final File[] files = new File[2];
+        for (int i = 0; i < files.length; i++)
+            files[i] = new File(loopingPrompt(String.format(criteria,
+                    prompt[i], prompt[i]), TEST.file).trim());
+        return files;
     }
 
     /**
@@ -123,7 +165,19 @@ public class Main {
      * @return true/false if matches the pattern or not
      */
     public static boolean parseFile(final String theInput) {
-        return regex(".+\\.txt", theInput);
+        final String admonition = "Enter a valid file name.";
+        boolean valid = false;
+        String in = theInput.trim();
+        if (regex("^.+\\.txt$", in)) {
+            try {
+                if (new File(in).exists()) valid = true;
+                else System.out.println(admonition);
+            } catch (Exception e) {
+                System.out.println(admonition);
+                // TODO log error
+            }
+        } else System.out.println(admonition);
+        return valid;
     }
 
     /**
@@ -131,13 +185,15 @@ public class Main {
      *
      * @return Array of 2 integers.
      */
-    public static int[] getInts() {
-        String prompt = "Enter an int (Range -2147483648 to 2147483647, " +
-                "proper commas optional)";
+    private static int[] getInts() {
+        final String criteria = """
+                Integers must meet the following criteria:
+                \t- Value must range from -2147483648 to 2147483647
+                \t- Proper commas usage is allowed but optional""";
         final int[] ints = new int[2];
         for (int i = 0; i < ints.length; i++)
             ints[i] =
-                    Integer.parseInt(loopingPrompt(prompt, TEST.integer).trim().replace(",", ""));
+                    Integer.parseInt(loopingPrompt(criteria, TEST.integer).trim().replace(",", ""));
         return ints;
     }
 
@@ -148,7 +204,8 @@ public class Main {
      * @return Boolean if matches the pattern (within bounds)
      */
     public static boolean parseInts(final String theInput) {
-        String in = theInput.trim();
+        final String admonition = "Enter a valid integer value.";
+        final String in = theInput.trim();
         boolean valid = false;
         if (regex("^-?\\d{1,3}((,\\d{3}){0,3}|(\\d{3}){0,3})?$", in)) {
             // 2147483647
@@ -156,9 +213,10 @@ public class Main {
                 Integer.parseInt(in.replace(",", ""));
                 valid = true;
             } catch (Exception e) {
-                System.out.println("Enter a valid integer value.");
+                System.out.println(admonition);
+                // TODO print to error log file
             }
-        } else System.out.println("Enter a valid integer value.");
+        } else System.out.println(admonition);
         return valid;
     }
 
@@ -167,8 +225,8 @@ public class Main {
      *
      * @return A String array with the First and Last name on index 0 and 1.
      */
-    public static String[] getName() {
-        String criteria = """
+    private static String[] getName() {
+        final String criteria = """
                 %s name must meet the following criteria:
                 \t- 1 to 50 characters long
                 \t- Only English upper and lower case letters
@@ -190,20 +248,8 @@ public class Main {
      * @return Boolean if it fits the requirements
      */
     public static boolean parseName(final String theInput) {
-        String in = theInput.trim();
-        return regex("^[a-zA-Z]+(['-]?[a-zA-Z]+)*$", in) && in.length() > 0 && in.length() < 51;
-    }
-
-    /**
-     * Regex matcher helper function
-     *
-     * @param theRegex The pattern string
-     * @param theInput The string to be pattern matched
-     * @return Boolean if the input string matches the pattern
-     */
-    public static boolean regex(final String theRegex, final String theInput) {
-        Pattern p = Pattern.compile(theRegex);
-        Matcher m = p.matcher(theInput);
-        return m.matches();
+        final String in = theInput.trim();
+        return in.length() > 0 && in.length() < 51 && regex("^[a-zA-Z]+" +
+                "(['-]?[a-zA-Z]+)*$", in);
     }
 }
