@@ -9,16 +9,16 @@ public class Main {
 
     public static void main(String[] args) {
         //Get Names
-//        String[] name = getName();
-//        String firstName = name[0];
-//        String lastName = name[1];
-//        System.out.println(firstName + " " + lastName);
+        String[] name = getName();
+        String firstName = name[0];
+        String lastName = name[1];
+        System.out.println(firstName + " " + lastName);
         //Get Ints
-        int[] ints = getInts();
-        int firstInt = ints[0];
-        int secondInt = ints[1];
-        System.out.println(firstInt);
-        System.out.println(secondInt);
+//        int[] ints = getInts();
+//        int firstInt = ints[0];
+//        int secondInt = ints[1];
+//        System.out.println(firstInt);
+//        System.out.println(secondInt);
         //Get input file
 //        File[] files = getFiles();
 //        File inputFile = files[0];
@@ -56,10 +56,8 @@ public class Main {
         boolean valid = false;
         while (!valid) {
             System.out.println();
-            System.out.println("Must be at least 8 characters, and at least " +
-                    "one uppercase and lowercase,");
-            System.out.println("at least one special character and at least " +
-                    "one digit.");
+            System.out.println("Must be at least 8 characters, and at least " + "one uppercase and lowercase,");
+            System.out.println("at least one special character and at least " + "one digit.");
             System.out.print("Password: ");
             pass = scanner.nextLine();
             valid = parsePassword(pass);
@@ -105,8 +103,7 @@ public class Main {
         valid = false;
         while (!valid) {
             System.out.println();
-            System.out.println("Please enter the name of your output file " +
-                    "including the extension (.txt only)");
+            System.out.println("Please enter the name of your output file " + "including the extension (.txt only)");
             System.out.print("Filename: ");
             String output = scanner.nextLine();
             valid = parseFile(output);
@@ -135,10 +132,12 @@ public class Main {
      * @return Array of 2 integers.
      */
     public static int[] getInts() {
-        String prompt = "Enter an int (Range -2147483648 to 2147483647, proper commas optional)";
+        String prompt = "Enter an int (Range -2147483648 to 2147483647, " +
+                "proper commas optional)";
         final int[] ints = new int[2];
         for (int i = 0; i < ints.length; i++)
-            ints[i] = Integer.parseInt(loopingPrompt(prompt, TEST.integer).trim().replace(",", ""));
+            ints[i] =
+                    Integer.parseInt(loopingPrompt(prompt, TEST.integer).trim().replace(",", ""));
         return ints;
     }
 
@@ -152,7 +151,7 @@ public class Main {
         String in = theInput.trim();
         boolean valid = false;
         if (regex("^-?\\d{1,3}((,\\d{3}){0,3}|(\\d{3}){0,3})?$", in)) {
-            //2147483647
+            // 2147483647
             try {
                 Integer.parseInt(in.replace(",", ""));
                 valid = true;
@@ -169,34 +168,18 @@ public class Main {
      * @return A String array with the First and Last name on index 0 and 1.
      */
     public static String[] getName() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Please enter your first name.");
-        String first = "";
-        String last = "";
-        boolean valid = false;
-        while (!valid) {
-            System.out.println();
-            System.out.println("Input must be between 1 and 50 characters " +
-                    "long.");
-            System.out.println("Only standard upper and lower case letters, " +
-                    "dashes, and apostrophe's allowed");
-            System.out.print("First name: ");
-            first = scanner.nextLine();
-            valid = parseName(first);
-        }
-        System.out.println("Please enter your last name.");
-        valid = false;
-        while (!valid) {
-            System.out.println();
-            System.out.println("Input must be between 1 and 50 characters " +
-                    "long.");
-            System.out.println("Only standard upper and lower case letters, " +
-                    "dashes, and apostrophe's allowed");
-            System.out.print("Last name: ");
-            last = scanner.nextLine();
-            valid = parseName(last);
-        }
-        return new String[]{first, last};
+        String criteria = """
+                %s name must meet the following criteria:
+                \t- 1 to 50 characters long
+                \t- Only English upper and lower case letters
+                \t- Dashes and apostrophes are allowed but optional
+                \t- Those special characters must be preceded and followed by letters
+                %s name""";
+        final String[] names = new String[]{"Your first", "Your last"};
+        for (int i = 0; i < names.length; i++)
+            names[i] = loopingPrompt(String.format(criteria, names[i],
+                    names[i]), TEST.name).trim();
+        return names;
     }
 
     /**
@@ -207,7 +190,8 @@ public class Main {
      * @return Boolean if it fits the requirements
      */
     public static boolean parseName(final String theInput) {
-        return regex("[A-Za-z'-]{1,50}", theInput);
+        String in = theInput.trim();
+        return regex("^[a-zA-Z]+(['-]?[a-zA-Z]+)*$", in) && in.length() > 0 && in.length() < 51;
     }
 
     /**
