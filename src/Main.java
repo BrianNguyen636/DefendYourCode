@@ -146,7 +146,7 @@ public class Main {
     private static boolean validatePassword(final String password2,
                                             final byte[] salt,
                                             final String path) {
-        final String admonition = "File issue occurred.";
+        final String admonition = "Password storage issue occurred.";
         boolean valid = false;
         if (new File(path).exists()) {
             try {
@@ -191,8 +191,8 @@ public class Main {
         for (int i = 0; i < files.length; i++) {
             boolean valid = false;
             while (!valid) {
-                final String potential = loopingPrompt(String.format(criteria
-                        , prompt[i], prompt[i]), TEST.file).trim();
+                final String potential = loopingPrompt(String.format(criteria,
+                        prompt[i], prompt[i]), TEST.file).trim();
                 if (checkFile(potential, type[i])) {
                     files[i] = new File(potential);
                     valid = true;
@@ -221,9 +221,8 @@ public class Main {
             if (type == fileType.input) {
                 valid = inFile.exists() && inFile.setReadable(true);
             } else if (type == fileType.output)  {
-                if (inFile.exists()) {
-                    valid = inFile.setWritable(true);
-                } else valid = true;
+                if (inFile.exists()) valid = inFile.setWritable(true);
+                else valid = true;
             } else System.out.println("Shouldn't reach this!");
         } catch (Exception e) {
             System.out.println(admonition);
