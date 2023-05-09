@@ -15,6 +15,8 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +24,8 @@ import java.util.regex.Pattern;
 
 public class Main {
 
+    private final static Logger LOGGER =
+            Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private static final Scanner IN = new Scanner(System.in);
 
     public static void main(final String[] args) {
@@ -35,23 +39,23 @@ public class Main {
 
     private static void saveInfo(final String[] names, final int[] ints,
                                  final File[] files) {
-        try (FileWriter shakespear = new FileWriter(files[1])) {
+        try (final FileWriter shakespeare = new FileWriter(files[1])) {
             final BigInteger sum =
                     BigInteger.valueOf(ints[0]).add(BigInteger.valueOf(ints[1]));
             final BigInteger product =
                     BigInteger.valueOf(ints[0]).multiply(BigInteger.valueOf(ints[1]));
             final String contents =
                     new String(Files.readAllBytes(Paths.get(files[0].getPath())));
-            shakespear.write("First name: " + names[0]);
-            shakespear.write("\nLast name: " + names[1]);
-            shakespear.write("\nFirst Integer: " + ints[0]);
-            shakespear.write("\nSecond Integer: " + ints[1]);
-            shakespear.write("\nSum: " + sum);
-            shakespear.write("\nProduct: " + product);
-            shakespear.write("\nInput file name: " + files[0].getName());
-            shakespear.write("\nInput file contents:\n" + contents);
+            shakespeare.write("First name: " + names[0]);
+            shakespeare.write("\nLast name: " + names[1]);
+            shakespeare.write("\nFirst Integer: " + ints[0]);
+            shakespeare.write("\nSecond Integer: " + ints[1]);
+            shakespeare.write("\nSum: " + sum);
+            shakespeare.write("\nProduct: " + product);
+            shakespeare.write("\nInput file name: " + files[0].getName());
+            shakespeare.write("\nInput file contents:\n" + contents);
         } catch (Exception e) {
-            // TODO log e
+            LOGGER.log(Level.SEVERE, "Exception occurred", e);
         }
     }
 
@@ -110,7 +114,7 @@ public class Main {
         try {
             Files.write(Paths.get(path), genHash(salt, pw));
         } catch (Exception e) {
-            // TODO log e
+            LOGGER.log(Level.SEVERE, "Exception occurred", e);
         }
         final String verify = "Re-enter your password";
         boolean valid = false;
@@ -134,7 +138,7 @@ public class Main {
             md.update(salt);
             hashed = md.digest(password.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
-            // TODO log e
+            LOGGER.log(Level.SEVERE, "Exception occurred", e);
         }
         return hashed;
     }
@@ -150,7 +154,7 @@ public class Main {
                 valid = Arrays.equals(genHash(salt, password2), hash);
             } catch (Exception e) {
                 System.out.println(admonition);
-                // TODO log e
+                LOGGER.log(Level.SEVERE, "Exception occurred", e);
             }
         } else System.out.println(admonition);
         return valid;
@@ -203,7 +207,7 @@ public class Main {
                 else System.out.println(admonition);
             } catch (Exception e) {
                 System.out.println(admonition);
-                // TODO log error
+                LOGGER.log(Level.SEVERE, "Exception occurred", e);
             }
         } else System.out.println(admonition);
         return valid;
@@ -244,7 +248,7 @@ public class Main {
                 valid = true;
             } catch (Exception e) {
                 System.out.println(admonition);
-                // TODO print to error log file
+                LOGGER.log(Level.SEVERE, "Exception occurred", e);
             }
         } else System.out.println(admonition);
         return valid;
