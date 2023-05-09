@@ -26,6 +26,9 @@ public class Main {
             Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     private static final Scanner IN = new Scanner(System.in);
 
+    private static final String CURR_DIR =
+            System.getProperty("user.dir") + File.separator;
+
     public static void main(final String[] args) {
         final String[] names = getName();
         final int[] ints = getInts();
@@ -71,8 +74,7 @@ public class Main {
                 case integer -> valid = parseInts(input);
                 case file -> valid = parseFile(input);
                 case password -> valid = parsePassword(input);
-                default ->
-                        System.out.println("Shouldn't be able to reach this!");
+                default -> System.out.println("Shouldn't reach this!");
             }
         }
         return input;
@@ -108,7 +110,7 @@ public class Main {
                 Your password""";
         final String pw = loopingPrompt(criteria, TEST.password).trim();
         final byte[] salt = genSalt();
-        final String path = Paths.get("").toAbsolutePath() + "Password.txt";
+        final String path = CURR_DIR + Arrays.toString(salt) + ".txt";
         try {
             Files.write(Paths.get(path), genHash(salt, pw));
         } catch (Exception e) {
@@ -168,6 +170,8 @@ public class Main {
         return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" + ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
     }
 
+    private enum fileType {input, output}
+
     /**
      * Prompts user for input and output filenames.
      *
@@ -176,18 +180,20 @@ public class Main {
     private static File[] getFiles() {
         final String criteria = """
                 %s file name must meet the following criteria:
-                \t- Full path must be included
-                \t- Extension must be included
-                \t- Extension can only be .txt
+                \t- File must be in the code's directory
+                \t- Name must be at least one character
+                \t- Extension must be included and can only be .txt
+                \t- Cannot have these special characters (/\\:*?"<>|)
                 %s file name""";
         final String[] prompt = new String[]{"Your input", "Your output"};
+        final fileType[] type = new fileType[]{fileType.input, fileType.output};
         final File[] files = new File[2];
         for (int i = 0; i < files.length; i++) {
             boolean valid = false;
             while (!valid) {
                 final String potential = loopingPrompt(String.format(criteria
                         , prompt[i], prompt[i]), TEST.file).trim();
-                if (checkFile(potential)) {
+                if (checkFile(potential, type[i])) {
                     files[i] = new File(potential);
                     valid = true;
                 }
@@ -203,16 +209,22 @@ public class Main {
      * @return true/false if matches the pattern or not
      */
     public static boolean parseFile(final String theInput) {
-        return regex("^.+\\.txt$", theInput.trim());
+        return regex("^[^/\\\\:*?\"<>|]+\\.txt$", theInput.trim());
     }
 
-    private static boolean checkFile(final String theInput) {
+    private static boolean checkFile(final String theInput,
+                                     final fileType type) {
         final String admonition = "Enter a valid file name.";
         boolean valid = false;
-        String in = theInput.trim();
         try {
-            if (new File(in).exists()) valid = true;
-            else System.out.println(admonition);
+            File inFile = new File(CURR_DIR + theInput.trim());
+            if (type == fileType.input) {
+                valid = inFile.exists() && inFile.setReadable(true);
+            } else if (type == fileType.output)  {
+                if (inFile.exists()) {
+                    valid = inFile.setWritable(true);
+                } else valid = true;
+            } else System.out.println("Shouldn't reach this!");
         } catch (Exception e) {
             System.out.println(admonition);
             LOGGER.log(Level.SEVERE, "Exception occurred", e);
