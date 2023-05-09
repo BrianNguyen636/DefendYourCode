@@ -20,8 +20,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// TODO fix file tests
-
 public class Main {
 
     private final static Logger LOGGER =
@@ -167,8 +165,7 @@ public class Main {
      * @return true/false if pattern matches
      */
     public static boolean parsePassword(final String theInput) {
-        return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" +
-                ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
+        return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" + ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
     }
 
     /**
@@ -185,9 +182,17 @@ public class Main {
                 %s file name""";
         final String[] prompt = new String[]{"Your input", "Your output"};
         final File[] files = new File[2];
-        for (int i = 0; i < files.length; i++)
-            files[i] = new File(loopingPrompt(String.format(criteria,
-                    prompt[i], prompt[i]), TEST.file).trim());
+        for (int i = 0; i < files.length; i++) {
+            boolean valid = false;
+            while (!valid) {
+                final String potential = loopingPrompt(String.format(criteria
+                        , prompt[i], prompt[i]), TEST.file).trim();
+                if (checkFile(potential)) {
+                    files[i] = new File(potential);
+                    valid = true;
+                }
+            }
+        }
         return files;
     }
 
@@ -198,18 +203,20 @@ public class Main {
      * @return true/false if matches the pattern or not
      */
     public static boolean parseFile(final String theInput) {
+        return regex("^.+\\.txt$", theInput.trim());
+    }
+
+    private static boolean checkFile(final String theInput) {
         final String admonition = "Enter a valid file name.";
         boolean valid = false;
         String in = theInput.trim();
-        if (regex("^.+\\.txt$", in)) {
-            try {
-                if (new File(in).exists()) valid = true;
-                else System.out.println(admonition);
-            } catch (Exception e) {
-                System.out.println(admonition);
-                LOGGER.log(Level.SEVERE, "Exception occurred", e);
-            }
-        } else System.out.println(admonition);
+        try {
+            if (new File(in).exists()) valid = true;
+            else System.out.println(admonition);
+        } catch (Exception e) {
+            System.out.println(admonition);
+            LOGGER.log(Level.SEVERE, "Exception occurred", e);
+        }
         return valid;
     }
 
