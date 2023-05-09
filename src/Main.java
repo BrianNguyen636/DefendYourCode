@@ -1,10 +1,3 @@
-/*
-Team18
-Andrew Nguyen
-Anthony Nguyen
-Brian Nguyen
- */
-
 import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
@@ -20,15 +13,42 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Team18
+ * Andrew Nguyen
+ * Anthony Nguyen
+ * Brian Nguyen
+ *
+ * Collect first and last name, two integers, and two file names from user.
+ * Asks user for password and validates it. Write the collected information
+ * into one of the given user files.
+ *
+ * @author Anthony Nguyen
+ * @author Brian Nguyen
+ */
 public class Main {
 
+    /**
+     * Logger for exceptions.
+     **/
     private final static Logger LOGGER =
             Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    /**
+     * Scanner object for keyboard.
+     */
     private static final Scanner IN = new Scanner(System.in);
 
+    /**
+     * Directory of code.
+     */
     private static final String CURR_DIR =
             System.getProperty("user.dir") + File.separator;
 
+    /**
+     * Main executing method.
+     *
+     * @param args  String command line arguments
+     */
     public static void main(final String[] args) {
         final String[] names = getName();
         final int[] ints = getInts();
@@ -38,6 +58,13 @@ public class Main {
         IN.close();
     }
 
+    /**
+     * Writes given information as well as some calculated into a given file.
+     *
+     * @param names     String first and last names
+     * @param ints      Two integers
+     * @param files     Input and output files
+     */
     private static void saveInfo(final String[] names, final int[] ints,
                                  final File[] files) {
         try (final FileWriter shakespeare = new FileWriter(files[1])) {
@@ -60,8 +87,19 @@ public class Main {
         }
     }
 
+    /**
+     * Denotes what sort of test is appropriate.
+     */
     private enum TEST {name, integer, file, password}
 
+    /**
+     * Text prompt for information that loops until the user given information
+     * passes a particular test.
+     *
+     * @param displayText   Given text prompt to display
+     * @param type          Type of test necessary for the info
+     * @return  return valid information
+     */
     private static String loopingPrompt(final String displayText,
                                         final TEST type) {
         String input = null;
@@ -94,9 +132,9 @@ public class Main {
     }
 
     /**
-     * Prompts for a password, applies the proper salting and hashing via
-     * SecureRandom and SHA-512 respectively, and then writes it to an output
-     * file.
+     * Prompts for a password, applies salting and hashing, and then writes
+     * it to an output file. Asks for password validation and compares it to
+     * the first password file until it gets a match. Cleans up afterward.
      */
     public static void getPassword() {
         final String criteria = """
@@ -125,12 +163,24 @@ public class Main {
         new File(path).deleteOnExit();
     }
 
+    /**
+     * Generates a salt using SecureRandom.
+     *
+     * @return  16 bytes of random bits
+     */
     private static byte[] genSalt() {
         final byte[] salt = new byte[16];
         new SecureRandom().nextBytes(salt);
         return salt;
     }
 
+    /**
+     * Generates a hash given a salt and a password.
+     *
+     * @param salt      16 byte random data
+     * @param password  User given password String
+     * @return  The hash of the salt and password
+     */
     private static byte[] genHash(final byte[] salt, final String password) {
         byte[] hashed = null;
         try {
@@ -143,6 +193,15 @@ public class Main {
         return hashed;
     }
 
+    /**
+     * Validates a password against a previously salted and hashed stored
+     * password.
+     *
+     * @param password2 The password to check
+     * @param salt      The same salt previously used
+     * @param path      The path to where the previous salted/hashed password is
+     * @return  true if the passwords match, else false
+     */
     private static boolean validatePassword(final String password2,
                                             final byte[] salt,
                                             final String path) {
@@ -170,6 +229,9 @@ public class Main {
         return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" + ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
     }
 
+    /**
+     * Denotes whether a file is to be used as input or output.
+     */
     private enum fileType {input, output}
 
     /**
@@ -191,8 +253,8 @@ public class Main {
         for (int i = 0; i < files.length; i++) {
             boolean valid = false;
             while (!valid) {
-                final String potential = loopingPrompt(String.format(criteria,
-                        prompt[i], prompt[i]), TEST.file).trim();
+                final String potential = loopingPrompt(String.format(criteria
+                        , prompt[i], prompt[i]), TEST.file).trim();
                 if (checkFile(potential, type[i])) {
                     files[i] = new File(potential);
                     valid = true;
@@ -212,15 +274,23 @@ public class Main {
         return regex("^[^/\\\\:*?\"<>|]+\\.txt$", theInput.trim());
     }
 
-    private static boolean checkFile(final String theInput,
+    /**
+     * Checks if a file exists and is readable for input. For output, checks if
+     * a file exists; if it does, it must be writable.
+     *
+     * @param fileName  String name of file
+     * @param type      Nature of the file, input or output
+     * @return  true if above conditions satisfied, else false
+     */
+    private static boolean checkFile(final String fileName,
                                      final fileType type) {
         final String admonition = "Enter a valid file name.";
         boolean valid = false;
         try {
-            File inFile = new File(CURR_DIR + theInput.trim());
+            File inFile = new File(CURR_DIR + fileName.trim());
             if (type == fileType.input) {
                 valid = inFile.exists() && inFile.setReadable(true);
-            } else if (type == fileType.output)  {
+            } else if (type == fileType.output) {
                 if (inFile.exists()) valid = inFile.setWritable(true);
                 else valid = true;
             } else System.out.println("Shouldn't reach this!");
