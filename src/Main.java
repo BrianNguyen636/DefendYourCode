@@ -1,4 +1,6 @@
 import java.io.File;
+import java.io.FileWriter;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -8,6 +10,8 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+// TODO fix file tests
 
 public class Main {
 
@@ -24,7 +28,24 @@ public class Main {
 
     private static void saveInfo(final String[] names, final int[] ints,
                                  final File[] files) {
-
+        try (FileWriter shakespear = new FileWriter(files[1])) {
+            final BigInteger sum =
+                    BigInteger.valueOf(ints[0]).add(BigInteger.valueOf(ints[1]));
+            final BigInteger product =
+                    BigInteger.valueOf(ints[0]).multiply(BigInteger.valueOf(ints[1]));
+            final String contents =
+                    new String(Files.readAllBytes(Paths.get(files[0].getPath())));
+            shakespear.write("First name: " + names[0]);
+            shakespear.write("\nLast name: " + names[1]);
+            shakespear.write("\nFirst Integer: " + ints[0]);
+            shakespear.write("\nSecond Integer: " + ints[1]);
+            shakespear.write("\nSum: " + sum);
+            shakespear.write("\nProduct: " + product);
+            shakespear.write("\nInput file name: " + files[0].getName());
+            shakespear.write("\nInput file contents:\n" + contents);
+        } catch (Exception e) {
+            // TODO log e
+        }
     }
 
     private enum TEST {name, integer, file, password}
@@ -135,7 +156,8 @@ public class Main {
      * @return true/false if pattern matches
      */
     public static boolean parsePassword(final String theInput) {
-        return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" + ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
+        return regex("^(?!.*([a-z]{4}))(?=.*?[A-Z])(?=.*?[a-z])(?=.*?\\d)(?=" +
+                ".*?[?!,:;',._\"])[\\w?!,:;',.\"]{10,}$", theInput.trim());
     }
 
     /**
@@ -189,7 +211,8 @@ public class Main {
         final String criteria = """
                 Integers must meet the following criteria:
                 \t- Value must range from -2147483648 to 2147483647
-                \t- Proper commas usage is allowed but optional""";
+                \t- Proper commas usage is allowed but optional
+                Enter integer""";
         final int[] ints = new int[2];
         for (int i = 0; i < ints.length; i++)
             ints[i] =

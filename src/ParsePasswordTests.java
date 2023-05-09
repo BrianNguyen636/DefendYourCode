@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 public class ParsePasswordTests {
     @Test
     void validPassword() {
-        Assertions.assertTrue(Main.parsePassword("Password123!"));
+        Assertions.assertTrue(Main.parsePassword("12345aB!?_"));
     }
     @Test
     void rejectNoUppercase() {
