@@ -242,7 +242,7 @@ public class Main {
     private static File[] getFiles() {
         final String criteria = """
                 %s file name must meet the following criteria:
-                \t- File must be in the code's directory
+                \t- Pre-existing files must be in the code's directory
                 \t- Name must be at least one character
                 \t- Extension must be included and can only be .txt
                 \t- Cannot have these special characters (/\\:*?"<>|)
