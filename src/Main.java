@@ -1,9 +1,13 @@
 import java.io.File;
 import java.util.Scanner;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
+
+    private static final Scanner IN = new Scanner(System.in);
+
     public static void main(String[] args) {
         //Get Names
 //        String[] name = getName();
@@ -11,16 +15,35 @@ public class Main {
 //        String lastName = name[1];
 //        System.out.println(firstName + " " + lastName);
         //Get Ints
-//        int[] ints = getInts();
-//        int firstInt = ints[0];
-//        int secondInt = ints[1];
-//        System.out.println(firstInt);
-//        System.out.println(secondInt);
+        int[] ints = getInts();
+        int firstInt = ints[0];
+        int secondInt = ints[1];
+        System.out.println(firstInt);
+        System.out.println(secondInt);
         //Get input file
 //        File[] files = getFiles();
 //        File inputFile = files[0];
 //        File outputFile = files[1];
-        getPassword();
+//        getPassword();
+    }
+
+    private enum TEST {name, integer, file, password}
+
+    public static String loopingPrompt(String displayText, TEST type) {
+        String input = null;
+        boolean valid = false;
+        while (!valid) {
+            System.out.println();
+            System.out.println(displayText);
+            input = IN.nextLine();
+            switch (type) {
+                case name -> System.out.println();
+                case integer -> valid = parseInts(input);
+                case file -> System.out.println();
+                case password -> System.out.println();
+            }
+        }
+        return input;
     }
 
     /**
@@ -112,19 +135,23 @@ public class Main {
         String second = "";
         while (!valid) {
             System.out.println();
-            System.out.println("Please enter your first int (Range -2147483648 to 2147483647)");
+            System.out.println("Please enter your first int (Range " +
+                    "-2147483648 to 2147483647), commas are accepted if " +
+                    "properly placed");
             first = scanner.nextLine();
             valid = parseInts(first);
         }
         valid = false;
         while (!valid) {
             System.out.println();
-            System.out.println("Please enter your second int (Range -2147483648 to 2147483647)");
+            System.out.println("Please enter your second int (Range " +
+                    "-2147483648 to 2147483647), commas are accepted if " +
+                    "properly placed");
             second = scanner.nextLine();
             valid = parseInts(second);
         }
-        int firstInt = Integer.parseInt(first);
-        int secondInt = Integer.parseInt(second);
+        int firstInt = Integer.parseInt(first.trim().replace(",", ""));
+        int secondInt = Integer.parseInt(second.trim().replace(",", ""));
         return new int[]{firstInt,secondInt};
     }
 
@@ -134,11 +161,20 @@ public class Main {
      * @return Boolean if matches the pattern (within bounds)
      */
     public static boolean parseInts(final String theInput) {
-        //2147483647
-        return regex("^-?[0-1]?[0-9]{1,9}", theInput) ||
-                regex("2[0-1][0-4][0-7][0-4][0-8][0-3][0-6][0-4][0-7]", theInput) ||
-                regex("-2[0-1][0-4][0-7][0-4][0-8][0-3][0-6][0-4][0-8]", theInput);
+        String in = theInput.trim();
+        boolean valid = false;
+        // "^-?\\d{1,10}$"
+        if (regex("^-?\\d{1,3}((,\\d{3}){0,3}|(\\d{3}){0,3})?$", in)) { //2147483647
+            try {
+                Integer.parseInt(in.replace(",", ""));
+                valid = true;
+            } catch (Exception e) {
+                System.out.println("Enter a valid integer value.");
+            }
+        } else System.out.println("Enter a valid integer value.");
+        return valid;
     }
+
     /**
      * Prompts the first and last name from user
      * @return A String array with the First and Last name on index 0 and 1.
